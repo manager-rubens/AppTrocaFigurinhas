@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getStickerById } from "@/lib/catalog";
-import { deleteFeedRecord, upsertFeedRecord } from "@/lib/feed";
+import { getCurrentUser } from "@/lib/auth";
+import { deleteFeedRecord, getFeedRecordForUser, upsertFeedRecord } from "@/lib/feed";
 import { isValidWhatsapp, normalizeWhatsapp } from "@/lib/format";
 import type { ActionState, FeedType } from "@/types";
 
@@ -26,6 +27,7 @@ export async function saveRegistration(
   const nome = getRequiredString(formData, "nome");
   const whatsapp = normalizeWhatsapp(formData.get("whatsapp"));
   const casaLote = getRequiredString(formData, "casaLote");
+  const user = await getCurrentUser();
 
   if (!sticker) {
     return {
@@ -41,6 +43,13 @@ export async function saveRegistration(
     };
   }
 
+  if (!user) {
+    return {
+      ok: false,
+      message: "Entre com telefone/senha ou Google para registrar esta figurinha."
+    };
+  }
+
   if (nome.length < 2 || casaLote.length < 1 || !isValidWhatsapp(whatsapp)) {
     return {
       ok: false,
@@ -48,12 +57,14 @@ export async function saveRegistration(
     };
   }
 
+  const previousRecord = await getFeedRecordForUser(sticker.id, user.id);
   const result = await upsertFeedRecord({
     stickerId: sticker.id,
     tipo,
     nome,
     whatsapp,
-    casaLote
+    casaLote,
+    userId: user.id
   });
 
   if (!result.ok) {
@@ -68,7 +79,9 @@ export async function saveRegistration(
 
   return {
     ok: true,
-    message: "Registro salvo. Um WhatsApp mantem apenas um registro ativo por figurinha."
+    message: previousRecord
+      ? "Registro atualizado. Sua conta mantem apenas um registro ativo por figurinha."
+      : "Registro criado. Sua conta mantem apenas um registro ativo por figurinha."
   };
 }
 
@@ -79,7 +92,7 @@ export async function removeRegistration(
   void previousState;
   const stickerId = getRequiredString(formData, "stickerId");
   const sticker = getStickerById(stickerId);
-  const whatsapp = normalizeWhatsapp(formData.get("whatsapp"));
+  const user = await getCurrentUser();
 
   if (!sticker) {
     return {
@@ -88,14 +101,14 @@ export async function removeRegistration(
     };
   }
 
-  if (!isValidWhatsapp(whatsapp)) {
+  if (!user) {
     return {
       ok: false,
-      message: "Informe um WhatsApp valido para remover."
+      message: "Entre com telefone/senha ou Google para remover seu registro."
     };
   }
 
-  const result = await deleteFeedRecord(sticker.id, whatsapp);
+  const result = await deleteFeedRecord(sticker.id, user.id);
 
   if (!result.ok) {
     return {
@@ -110,7 +123,7 @@ export async function removeRegistration(
   if (result.data.deleted === 0) {
     return {
       ok: false,
-      message: "Nenhum registro ativo foi encontrado para esse WhatsApp."
+      message: "Nenhum registro ativo foi encontrado para sua conta nesta figurinha."
     };
   }
 

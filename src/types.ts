@@ -13,6 +13,7 @@ export type Sticker = {
 export type FeedRecord = {
   id: string;
   stickerId: string;
+  userId: string | null;
   tipo: FeedType;
   nome: string;
   whatsapp: string;
@@ -30,4 +31,12 @@ export type StickerFeedSummary = {
 export type ActionState = {
   ok: boolean;
   message: string;
+};
+
+export type AuthUserView = {
+  id: string;
+  displayName: string;
+  phone: string | null;
+  email: string | null;
+  avatarUrl: string | null;
 };

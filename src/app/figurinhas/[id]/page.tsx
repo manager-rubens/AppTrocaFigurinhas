@@ -3,6 +3,7 @@ import { AppHeader } from "@/components/app-header";
 import { FeedTabs } from "@/components/feed-tabs";
 import { RegistrationPanel } from "@/components/registration-panel";
 import { getAllStickers, getStickerById } from "@/lib/catalog";
+import { getCurrentUser } from "@/lib/auth";
 import { getFeedForSticker } from "@/lib/feed";
 
 export const dynamic = "force-dynamic";
@@ -27,13 +28,14 @@ export default async function StickerDetailPage({ params }: StickerDetailPagePro
     notFound();
   }
 
-  const { records, error } = await getFeedForSticker(sticker.id);
+  const [{ records, error }, user] = await Promise.all([getFeedForSticker(sticker.id), getCurrentUser()]);
   const repeated = records.filter((record) => record.tipo === "tem_repetida");
   const needed = records.filter((record) => record.tipo === "precisa");
+  const currentUserRecord = user ? records.find((record) => record.userId === user.id) ?? null : null;
 
   return (
     <>
-      <AppHeader showBack />
+      <AppHeader showBack user={user} />
       <main className="page-main">
         {error ? <div className="notice">Feed indisponivel no momento: {error}</div> : null}
 
@@ -70,7 +72,7 @@ export default async function StickerDetailPage({ params }: StickerDetailPagePro
           </div>
         </section>
 
-        <RegistrationPanel sticker={sticker} />
+        <RegistrationPanel sticker={sticker} user={user} currentUserRecord={currentUserRecord} />
         <FeedTabs repeated={repeated} needed={needed} />
       </main>
     </>

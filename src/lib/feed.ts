@@ -4,6 +4,7 @@ import { getSupabaseClient } from "@/lib/supabase";
 type FeedRow = {
   id: string;
   sticker_id: string;
+  user_id: string | null;
   tipo: FeedType;
   nome: string;
   whatsapp: string;
@@ -20,6 +21,7 @@ type SaveFeedInput = {
   nome: string;
   whatsapp: string;
   casaLote: string;
+  userId: string;
 };
 
 type FeedResult<T> =
@@ -36,6 +38,7 @@ function mapFeedRow(row: FeedRow): FeedRecord {
   return {
     id: row.id,
     stickerId: row.sticker_id,
+    userId: row.user_id ?? null,
     tipo: row.tipo,
     nome: row.nome,
     whatsapp: row.whatsapp,
@@ -43,6 +46,30 @@ function mapFeedRow(row: FeedRow): FeedRecord {
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
+}
+
+export async function getFeedRecordForUser(
+  stickerId: string,
+  userId: string
+): Promise<FeedRecord | null> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("sticker_feed")
+    .select("*")
+    .eq("sticker_id", stickerId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return mapFeedRow(data as FeedRow);
 }
 
 export async function getFeedForSticker(
@@ -133,10 +160,11 @@ export async function upsertFeedRecord(input: SaveFeedInput): Promise<FeedResult
         tipo: input.tipo,
         nome: input.nome,
         whatsapp: input.whatsapp,
-        casa_lote: input.casaLote
+        casa_lote: input.casaLote,
+        user_id: input.userId
       },
       {
-        onConflict: "sticker_id,whatsapp"
+        onConflict: "sticker_id,user_id"
       }
     )
     .select("*")
@@ -157,7 +185,7 @@ export async function upsertFeedRecord(input: SaveFeedInput): Promise<FeedResult
 
 export async function deleteFeedRecord(
   stickerId: string,
-  whatsapp: string
+  userId: string
 ): Promise<FeedResult<{ deleted: number }>> {
   const supabase = getSupabaseClient();
 
@@ -172,7 +200,7 @@ export async function deleteFeedRecord(
     .from("sticker_feed")
     .delete()
     .eq("sticker_id", stickerId)
-    .eq("whatsapp", whatsapp)
+    .eq("user_id", userId)
     .select("id")
     .returns<Array<{ id: string }>>();
 
