@@ -672,14 +672,14 @@ svg {
 
 .google-button {
   display: inline-flex;
-  min-height: 40px;
-  width: fit-content;
+  min-height: 44px;
+  width: 100%;
   align-items: center;
-  justify-self: center;
+  justify-content: center;
   gap: 10px;
   padding: 0 14px 0 12px;
   border: 1px solid #747775;
-  border-radius: 999px;
+  border-radius: 8px;
   color: #1f1f1f;
   background: var(--color-white);
   box-shadow: none;
