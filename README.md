@@ -31,6 +31,11 @@ SUPABASE_PUBLISHABLE_KEY=sua-publishable-ou-anon-key
 SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
 ```
 
+Se voce seguiu a documentacao do Supabase para Next.js, tambem pode usar os aliases
+`NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. A
+`SUPABASE_SERVICE_ROLE_KEY` continua obrigatoria para as Server Actions do feed e
+deve ficar somente no servidor.
+
 3. Crie/atualize o banco no Supabase executando os SQLs em ordem:
 
 ```text

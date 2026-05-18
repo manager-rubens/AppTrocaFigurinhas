@@ -4,13 +4,25 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let cachedClient: SupabaseClient | null = null;
 
+function firstDefined(...values: Array<string | undefined>): string | undefined {
+  return values.find((value) => Boolean(value));
+}
+
 export function getSupabaseAuthConfig(): { url: string; key: string } | null {
-  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key =
-    process.env.SUPABASE_PUBLISHABLE_KEY ??
-    process.env.SUPABASE_ANON_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = firstDefined(
+    process.env.SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_PROJECT_URL
+  );
+  const publicKey = firstDefined(
+    process.env.SUPABASE_PUBLISHABLE_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    process.env.SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.SUPABASE_PUBLIC_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_KEY
+  );
+  const key = publicKey ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   return url && key ? { url, key } : null;
 }

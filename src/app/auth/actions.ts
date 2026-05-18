@@ -11,6 +11,9 @@ const defaultState: ActionState = {
   message: ""
 };
 
+const authConfigMessage =
+  "Login sem configuracao do Supabase. Configure SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY, ou os aliases NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
+
 function normalizeNext(value: FormDataEntryValue | string | null): string {
   const next = typeof value === "string" ? value : "";
 
@@ -36,7 +39,7 @@ export async function loginWithPhonePassword(
   if (!supabase) {
     return {
       ok: false,
-      message: "Configure SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY para habilitar login."
+      message: authConfigMessage
     };
   }
 
@@ -49,7 +52,7 @@ export async function loginWithPhonePassword(
   if (!/^\d{10,15}$/.test(phone)) {
     return {
       ok: false,
-      message: "Informe um telefone valido com DDD."
+      message: "Informe um celular valido com DDD."
     };
   }
 
@@ -116,7 +119,7 @@ export async function signInWithGoogle(formData: FormData): Promise<void> {
   const next = normalizeNext(formData.get("next"));
 
   if (!supabase) {
-    redirect(`/login?error=${encodeURIComponent(defaultState.message || "Supabase nao configurado.")}`);
+    redirect(`/login?error=${encodeURIComponent(defaultState.message || authConfigMessage)}`);
   }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
