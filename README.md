@@ -47,8 +47,8 @@ supabase/migrations/0003_repair_sticker_feed_user_id.sql
 4. Configure o Auth no Supabase:
 
 - Em Authentication > Providers, mantenha Email habilitado.
-- Desative confirmacao obrigatoria de email para o MVP, pois o fluxo principal e celular + senha sem confirmacao.
 - O usuario digita celular, mas o app cria um email tecnico derivado do numero, no formato `u5511999999999@example.com`, para evitar dependencia do provider Phone/SMS do Supabase.
+- O cadastro usa `SUPABASE_SERVICE_ROLE_KEY` em Server Action para criar o usuario ja confirmado, sem envio de email e sem depender do limite de email do Supabase.
 - Em Authentication > Providers > Google, mantenha o Google habilitado.
 - Em Authentication > URL Configuration, adicione os redirect URLs:
   - `http://localhost:3000/auth/callback`

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createSupabaseAuthClient } from "@/lib/auth";
 import { normalizeWhatsapp } from "@/lib/format";
+import { getSupabaseClient } from "@/lib/supabase";
 import type { ActionState } from "@/types";
 
 const defaultState: ActionState = {
@@ -27,6 +28,10 @@ function friendlyAuthError(message: string): string {
 
   if (normalized.includes("already registered") || normalized.includes("already been registered")) {
     return "Este celular ja tem conta. Use Entrar para acessar.";
+  }
+
+  if (normalized.includes("rate limit")) {
+    return "O Supabase bloqueou temporariamente muitas tentativas de cadastro. Aguarde alguns minutos e tente novamente.";
   }
 
   if (normalized.includes("email") && normalized.includes("invalid")) {
@@ -61,6 +66,50 @@ function normalizeNext(value: FormDataEntryValue | string | null): string {
 function getRequiredString(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
+}
+
+async function createConfirmedUserWithAdmin({
+  authEmail,
+  displayName,
+  password,
+  phone
+}: {
+  authEmail: string;
+  displayName: string;
+  password: string;
+  phone: string;
+}): Promise<ActionState> {
+  const admin = getSupabaseClient();
+
+  if (!admin) {
+    return {
+      ok: false,
+      message:
+        "Configure SUPABASE_SERVICE_ROLE_KEY no servidor para criar conta sem envio de email pelo Supabase."
+    };
+  }
+
+  const { error } = await admin.auth.admin.createUser({
+    email: authEmail,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      display_name: displayName,
+      phone
+    }
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      message: friendlyAuthError(error.message)
+    };
+  }
+
+  return {
+    ok: true,
+    message: ""
+  };
 }
 
 export async function loginWithPhonePassword(
@@ -106,43 +155,28 @@ export async function loginWithPhonePassword(
       };
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email: authEmail,
+    const created = await createConfirmedUserWithAdmin({
+      authEmail,
+      displayName,
       password,
-      options: {
-        data: {
-          display_name: displayName,
-          phone
-        }
-      }
+      phone
     });
 
-    if (error) {
-      return {
-        ok: false,
-        message: friendlyAuthError(error.message)
-      };
+    if (!created.ok) {
+      return created;
     }
+  }
 
-    if (!data.session) {
-      return {
-        ok: false,
-        message:
-          "Conta criada, mas o Supabase ainda esta pedindo confirmacao por email. Desative a confirmacao para este MVP."
-      };
-    }
-  } else {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: authEmail,
-      password
-    });
+  const { error } = await supabase.auth.signInWithPassword({
+    email: authEmail,
+    password
+  });
 
-    if (error) {
-      return {
-        ok: false,
-        message: friendlyAuthError(error.message)
-      };
-    }
+  if (error) {
+    return {
+      ok: false,
+      message: friendlyAuthError(error.message)
+    };
   }
 
   redirect(next);
