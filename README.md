@@ -48,7 +48,7 @@ supabase/migrations/0003_repair_sticker_feed_user_id.sql
 
 - Em Authentication > Providers, mantenha Email habilitado.
 - Desative confirmacao obrigatoria de email para o MVP, pois o fluxo principal e celular + senha sem confirmacao.
-- O usuario digita celular, mas o app cria um email interno derivado do numero para evitar dependencia do provider Phone/SMS do Supabase.
+- O usuario digita celular, mas o app cria um email tecnico derivado do numero, no formato `u5511999999999@example.com`, para evitar dependencia do provider Phone/SMS do Supabase.
 - Em Authentication > Providers > Google, mantenha o Google habilitado.
 - Em Authentication > URL Configuration, adicione os redirect URLs:
   - `http://localhost:3000/auth/callback`

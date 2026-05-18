@@ -15,7 +15,7 @@ const authConfigMessage =
   "Login sem configuracao do Supabase. Configure SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY, ou os aliases NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
 
 function phoneToAuthEmail(phone: string): string {
-  return `celular-${phone}@apptrocafigurinhas.app`;
+  return `u${phone}@example.com`;
 }
 
 function friendlyAuthError(message: string): string {
@@ -27,6 +27,10 @@ function friendlyAuthError(message: string): string {
 
   if (normalized.includes("already registered") || normalized.includes("already been registered")) {
     return "Este celular ja tem conta. Use Entrar para acessar.";
+  }
+
+  if (normalized.includes("email") && normalized.includes("invalid")) {
+    return "Nao foi possivel gerar o login para este celular. Confira o numero e tente novamente.";
   }
 
   if (normalized.includes("email not confirmed")) {
