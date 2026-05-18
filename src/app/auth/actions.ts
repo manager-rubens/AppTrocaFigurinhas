@@ -14,6 +14,36 @@ const defaultState: ActionState = {
 const authConfigMessage =
   "Login sem configuracao do Supabase. Configure SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY, ou os aliases NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.";
 
+function phoneToAuthEmail(phone: string): string {
+  return `celular-${phone}@apptrocafigurinhas.app`;
+}
+
+function friendlyAuthError(message: string): string {
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("invalid login credentials")) {
+    return "Celular ou senha invalidos.";
+  }
+
+  if (normalized.includes("already registered") || normalized.includes("already been registered")) {
+    return "Este celular ja tem conta. Use Entrar para acessar.";
+  }
+
+  if (normalized.includes("email not confirmed")) {
+    return "Este cadastro ainda esta aguardando confirmacao de email. Desative a confirmacao de email no Supabase para este MVP.";
+  }
+
+  if (normalized.includes("signup requires a valid password")) {
+    return message;
+  }
+
+  if (normalized.includes("email confirmations") || normalized.includes("confirmation")) {
+    return "Conta criada, mas o Supabase ainda esta pedindo confirmacao. Desative a confirmacao de email para este MVP.";
+  }
+
+  return message;
+}
+
 function normalizeNext(value: FormDataEntryValue | string | null): string {
   const next = typeof value === "string" ? value : "";
 
@@ -46,6 +76,7 @@ export async function loginWithPhonePassword(
   const mode = getRequiredString(formData, "mode");
   const displayName = getRequiredString(formData, "displayName");
   const phone = normalizeWhatsapp(formData.get("phone"));
+  const authEmail = phoneToAuthEmail(phone);
   const password = getRequiredString(formData, "password");
   const next = normalizeNext(formData.get("next"));
 
@@ -72,11 +103,12 @@ export async function loginWithPhonePassword(
     }
 
     const { data, error } = await supabase.auth.signUp({
-      phone,
+      email: authEmail,
       password,
       options: {
         data: {
-          display_name: displayName
+          display_name: displayName,
+          phone
         }
       }
     });
@@ -84,7 +116,7 @@ export async function loginWithPhonePassword(
     if (error) {
       return {
         ok: false,
-        message: error.message
+        message: friendlyAuthError(error.message)
       };
     }
 
@@ -92,19 +124,19 @@ export async function loginWithPhonePassword(
       return {
         ok: false,
         message:
-          "Conta criada, mas o Supabase ainda esta pedindo confirmacao por SMS. Desative a confirmacao para este MVP."
+          "Conta criada, mas o Supabase ainda esta pedindo confirmacao por email. Desative a confirmacao para este MVP."
       };
     }
   } else {
     const { error } = await supabase.auth.signInWithPassword({
-      phone,
+      email: authEmail,
       password
     });
 
     if (error) {
       return {
         ok: false,
-        message: error.message
+        message: friendlyAuthError(error.message)
       };
     }
   }

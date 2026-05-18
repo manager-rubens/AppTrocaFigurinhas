@@ -34,6 +34,18 @@ type FeedResult<T> =
       message: string;
     };
 
+const userIdSchemaMessage =
+  "O banco ainda nao tem a coluna user_id no sticker_feed. Execute a migration supabase/migrations/0003_repair_sticker_feed_user_id.sql no Supabase e aguarde o reload do schema.";
+
+function isMissingUserIdSchemaError(message?: string): boolean {
+  if (!message) {
+    return false;
+  }
+
+  const normalized = message.toLowerCase();
+  return normalized.includes("user_id") && (normalized.includes("schema cache") || normalized.includes("column"));
+}
+
 function mapFeedRow(row: FeedRow): FeedRecord {
   return {
     id: row.id,
@@ -173,7 +185,9 @@ export async function upsertFeedRecord(input: SaveFeedInput): Promise<FeedResult
   if (error || !data) {
     return {
       ok: false,
-      message: error?.message ?? "Nao foi possivel salvar o registro."
+      message: isMissingUserIdSchemaError(error?.message)
+        ? userIdSchemaMessage
+        : error?.message ?? "Nao foi possivel salvar o registro."
     };
   }
 
@@ -207,7 +221,7 @@ export async function deleteFeedRecord(
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: isMissingUserIdSchemaError(error.message) ? userIdSchemaMessage : error.message
     };
   }
 

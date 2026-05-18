@@ -39,6 +39,7 @@ function getUserName(user: User): string {
     metadata.display_name ??
     metadata.full_name ??
     metadata.name ??
+    metadata.phone ??
     user.phone ??
     user.email ??
     "Morador";
@@ -48,11 +49,12 @@ function getUserName(user: User): string {
 
 export function toAuthUserView(user: User): AuthUserView {
   const avatar = user.user_metadata?.avatar_url;
+  const metadataPhone = user.user_metadata?.phone;
 
   return {
     id: user.id,
     displayName: getUserName(user),
-    phone: user.phone ?? null,
+    phone: user.phone ?? (typeof metadataPhone === "string" ? metadataPhone : null),
     email: user.email ?? null,
     avatarUrl: typeof avatar === "string" ? avatar : null
   };

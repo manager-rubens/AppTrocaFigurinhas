@@ -41,12 +41,14 @@ deve ficar somente no servidor.
 ```text
 supabase/migrations/0001_create_sticker_feed.sql
 supabase/migrations/0002_add_auth_owner_to_sticker_feed.sql
+supabase/migrations/0003_repair_sticker_feed_user_id.sql
 ```
 
 4. Configure o Auth no Supabase:
 
-- Em Authentication > Providers, mantenha Phone habilitado para email/phone password.
-- Desative confirmacao obrigatoria por SMS para o MVP, pois o fluxo principal e telefone + senha sem confirmacao.
+- Em Authentication > Providers, mantenha Email habilitado.
+- Desative confirmacao obrigatoria de email para o MVP, pois o fluxo principal e celular + senha sem confirmacao.
+- O usuario digita celular, mas o app cria um email interno derivado do numero para evitar dependencia do provider Phone/SMS do Supabase.
 - Em Authentication > Providers > Google, mantenha o Google habilitado.
 - Em Authentication > URL Configuration, adicione os redirect URLs:
   - `http://localhost:3000/auth/callback`

@@ -50,4 +50,4 @@ create index if not exists sticker_feed_user_id_idx
 notify pgrst, 'reload schema';
 
 comment on column public.sticker_feed.user_id is
-  'Usuario Supabase Auth dono do registro. Substitui a posse por WhatsApp no MVP com login.';
+  'Usuario Supabase Auth dono do registro. Necessario para criar, editar e remover registros com login.';
