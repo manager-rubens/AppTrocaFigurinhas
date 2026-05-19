@@ -93,6 +93,7 @@ A tabela `sticker_feed` usa:
 - constraint unica em `sticker_id + user_id`.
 
 O app usa Server Actions. A `SUPABASE_SERVICE_ROLE_KEY` deve ficar somente no servidor/local `.env.local` e nas variaveis privadas da Vercel. Nunca exponha essa chave no frontend.
+O cliente de autenticacao usa apenas `SUPABASE_PUBLISHABLE_KEY` ou uma chave `anon` equivalente; a service role fica restrita a criacao admin de usuario e operacoes server-side do feed.
 
 ## Deploy GitHub para Vercel
 

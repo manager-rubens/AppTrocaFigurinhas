@@ -22,9 +22,8 @@ export function getSupabaseAuthConfig(): { url: string; key: string } | null {
     process.env.SUPABASE_PUBLIC_KEY,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_KEY
   );
-  const key = publicKey ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  return url && key ? { url, key } : null;
+  return url && publicKey ? { url, key: publicKey } : null;
 }
 
 export function getSupabaseClient(): SupabaseClient | null {
