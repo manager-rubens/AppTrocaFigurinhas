@@ -63,6 +63,50 @@ function normalizeNext(value: FormDataEntryValue | string | null): string {
   return next;
 }
 
+function getFirstHeaderValue(headersList: Headers, key: string): string | null {
+  const value = headersList.get(key);
+
+  return value?.split(",")[0]?.trim() || null;
+}
+
+function getOriginFromHost(host: string | null, protocol: string | null): string | null {
+  if (!host) {
+    return null;
+  }
+
+  const normalizedProtocol = protocol?.replace(":", "") || (host.startsWith("localhost") ? "http" : "https");
+
+  return `${normalizedProtocol}://${host}`;
+}
+
+function getOriginFromUrl(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return new URL(value.startsWith("http") ? value : `https://${value}`).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getRequestOrigin(headersList: Headers): string {
+  const forwardedHost = getFirstHeaderValue(headersList, "x-forwarded-host");
+  const forwardedProto = getFirstHeaderValue(headersList, "x-forwarded-proto");
+  const host = getFirstHeaderValue(headersList, "host");
+  const origin = getFirstHeaderValue(headersList, "origin");
+
+  return (
+    getOriginFromHost(forwardedHost, forwardedProto) ??
+    getOriginFromHost(host, forwardedProto) ??
+    getOriginFromUrl(origin ?? undefined) ??
+    getOriginFromUrl(process.env.NEXT_PUBLIC_SITE_URL) ??
+    getOriginFromUrl(process.env.VERCEL_URL) ??
+    "http://localhost:3000"
+  );
+}
+
 function getRequiredString(formData: FormData, key: string): string {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -185,7 +229,7 @@ export async function loginWithPhonePassword(
 export async function signInWithGoogle(formData: FormData): Promise<void> {
   const supabase = await createSupabaseAuthClient();
   const requestHeaders = await headers();
-  const origin = requestHeaders.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const origin = getRequestOrigin(requestHeaders);
   const next = normalizeNext(formData.get("next"));
 
   if (!supabase) {
